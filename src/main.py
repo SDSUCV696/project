@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import dlib
 from imutils import face_utils
-import numpy as np
 from cascade import *
 
 
