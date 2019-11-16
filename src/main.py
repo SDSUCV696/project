@@ -15,6 +15,8 @@ def main():
         cv2.rectangle(gray, (x, y), (x+w, y+h), (255, 255, 255), 3)
     """
 
+    mat = scipy.io.loadmat('../test_img/wider_face_test.mat')
+
     rects = Hog.detect_face(gray)
     for (i, rect) in enumerate(rects):
         (x, y, w, h) = face_utils.rect_to_bb(rect)
