@@ -1,8 +1,8 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from cascade import Cascade
-from hog import Hog
+from models.cascade import Cascade
+from models.hog import Hog
 from imutils import face_utils
 
 
