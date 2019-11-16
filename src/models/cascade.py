@@ -2,13 +2,13 @@ import cv2
 
 
 class Cascade:
+    def __init__(self):
+        cascPath = "../utils/haarcascade_frontalface_default.xml"
+        self.faceCascade = cv2.CascadeClassifier(cascPath)
 
-    cascPath = "../utils/haarcascade_frontalface_default.xml"
-    faceCascade = cv2.CascadeClassifier(cascPath)
-
-    def detect_face(gray):
+    def detect_face(self, gray):
         # Detect faces
-        faces = faceCascade.detectMultiScale(
+        faces = self.faceCascade.detectMultiScale(
             gray,
             scaleFactor=1.1,
             minNeighbors=5,
