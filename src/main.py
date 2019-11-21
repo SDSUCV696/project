@@ -31,11 +31,46 @@ def parse_input():
             break
     return gt_bbxs
 
+def overlap(rect_A, rect_B):
+    A = [ [rect_A[0], rect_A[1]], [rect_A[0] + rect_A[2], rect_A[1] + rect_A[3]] ]
+    B = [ [rect_B[0], rect_B[1]], [rect_B[0] + rect_B[2], rect_B[1] + rect_B[3]] ]
+
+    if A[0][0] > B[1][0] or A[1][0] < B[0][0]:
+        return False
+
+    if A[1][1] < B[0][1] or A[0][1] > B[1][1]:
+        return False
+
+    return True
+
+def IoU(rect_A, rect_B):
+    Ax1 = rect_A[0]
+    Ay1 = rect_A[1]
+    Ax2 = Ax1 + rect_A[2]
+    Ay2 = Ay1 + rect_A[3]
+
+    Bx1 = rect_B[0]
+    By1 = rect_B[1]
+    Bx2 = Bx1 + rect_B[2]
+    By2 = By1 + rect_B[3]
+
+    x1 = max(Ax1, Bx1)
+    y1 = max(Ay1, By1)
+    x2 = min(Ax2, Bx2)
+    y2 = min(Ay2, By2)
+
+    intersection = abs(x2 - x1) * abs(y2 - y1)
+    union = abs(Ax2 - Ax1) * abs(Ay2 - Ay1) + abs(Bx2 - Bx1) * abs(By2 - By1) - intersection
+    iou = intersection / union
+    return iou
 
 def main():
     gray = cv2.imread('../test/img3.jpg', 0)
     # dict {'img_name' : [ bbx1, bbx2], ... } where each bbx is an array (4 + 6 tuple)
-    gt_bbxs = parse_input()
+    # gt_bbxs = parse_input()
+
+    
+    print(IoU([1, 1, 3, 2], [5, 1, 1, 1]))
 
     """
     print(fp.readline())
@@ -45,6 +80,7 @@ def main():
         gt_rects.append(fp.read())
     print(gt_rects[0])
     """
+
 
     """
     model1 = Cascade()
