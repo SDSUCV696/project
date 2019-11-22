@@ -7,6 +7,9 @@ from src.models.hog import Hog
 from src.models.cnn import Cnn
 
 
+THRESHOLD = 0.5
+
+
 def parse_input():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     gt_path = "../test/wider_face_split/wider_face_val_bbx_gt.txt"
@@ -106,17 +109,19 @@ def main():
     all_gt_bbxs = parse_input()
     gt_bbxs = all_gt_bbxs['7_Cheering_Cheering_7_125.jpg']
 
+    """
     model1 = Cascade()
     faces = model1.detect_face(gray)
     for (x, y, w, h) in faces: 
         # Draw rectangle around the face
         cv2.rectangle(gray, (x, y), (x+w, y+h), (255, 255, 255), 3)
 
-    plt.figure(figsize=(12,8))
+    plt.figure(figsize=(12, 8))
     plt.imshow(gray, cmap='gray')
     plt.show()
-    data = compare_exp_to_gt(faces, gt_bbxs, 0.4)
+    data = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
     print(data)
+    """
 
     """
     model2 = Hog()
@@ -132,22 +137,23 @@ def main():
     plt.show()
     """
 
-    """
     model3 = Cnn()
     rects = model3.detect_face(gray)
     faces = []
     for (i, rect) in enumerate(rects):
-        faces.append(face_utils.rect_to_bb(rect))
-        (x, y, w, h) = faces[-1]
+        x1 = rect.rect.left()
+        y1 = rect.rect.top()
+        x2 = rect.rect.right()
+        y2 = rect.rect.bottom()
+        faces.append([x1, y1, x2-x1, y2-y1])
         # Rectangle around the face
-        cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 3)
+        cv2.rectangle(gray, (x1, y1), (x2, y2), (255, 255, 255), 3)
 
     plt.figure(figsize=(12, 8))
     plt.imshow(gray, cmap='gray')
     plt.show()
-    data = compare_exp_to_gt(faces, gt_bbxs, 0.4)
+    data = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
     print(data)
-    """
 
 
 if __name__ == "__main__":
