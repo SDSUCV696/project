@@ -1,88 +1,111 @@
 import os
 import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 from imutils import face_utils
-from models.cascade import Cascade
-from models.hog import Hog
-from models.cnn import Cnn
+from src.models.cascade import Cascade
+from src.models.hog import Hog
+from src.models.cnn import Cnn
+
 
 def parse_input():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    gt_path = "../test/wider_face_split/wider_face_train_bbx_gt.txt"
+    gt_path = "../test/wider_face_split/wider_face_val_bbx_gt.txt"
     gt_bbxs = {}
     gt_file = open(os.path.join(script_dir, gt_path))
-    line = gt_file.readline().replace('\n', '')
+    line = gt_file.readline().replace('\n', '').split("/")[1]
     while line:
         gt_bbxs[line] = []
         num_bbxs = gt_file.readline()
-        if int(num_bbxs) !=  0:
+        if int(num_bbxs) != 0:
             for i in range(int(num_bbxs)):
                 bbx = gt_file.readline()
                 bbx = bbx.replace('\n', '')
                 tokens = bbx.split(' ')
-                tokens.pop() # last char is empty from '\n'
+                # last char is empty from '\n'
+                tokens.pop()
                 int_tokens = [int(i) for i in tokens]
                 gt_bbxs[line].append(int_tokens)
         else:
-            line = gt_file.readline().replace('\n', '')
+            # if the num of boxes is zero, move line down by one
+            line = gt_file.readline()
         line = gt_file.readline().replace('\n', '')
-        if not line:
+        if line:
+            # if line is not EOF, split it
+            line = line.split("/")[1]
+        else:
             break
     return gt_bbxs
 
-def overlap(rect_A, rect_B):
-    A = [ [rect_A[0], rect_A[1]], [rect_A[0] + rect_A[2], rect_A[1] + rect_A[3]] ]
-    B = [ [rect_B[0], rect_B[1]], [rect_B[0] + rect_B[2], rect_B[1] + rect_B[3]] ]
 
-    if A[0][0] > B[1][0] or A[1][0] < B[0][0]:
+def overlap(rect_a, rect_b):
+    a = [[rect_a[0], rect_a[1]], [rect_a[0] + rect_a[2], rect_a[1] + rect_a[3]]]
+    b = [[rect_b[0], rect_b[1]], [rect_b[0] + rect_b[2], rect_b[1] + rect_b[3]]]
+
+    if a[0][0] > b[1][0] or a[1][0] < b[0][0]:
         return False
 
-    if A[1][1] < B[0][1] or A[0][1] > B[1][1]:
+    if a[1][1] < b[0][1] or a[0][1] > b[1][1]:
         return False
 
     return True
 
-def IoU(rect_A, rect_B):
-    Ax1 = rect_A[0]
-    Ay1 = rect_A[1]
-    Ax2 = Ax1 + rect_A[2]
-    Ay2 = Ay1 + rect_A[3]
 
-    Bx1 = rect_B[0]
-    By1 = rect_B[1]
-    Bx2 = Bx1 + rect_B[2]
-    By2 = By1 + rect_B[3]
+def iou(rect_a, rect_b):
+    ax1 = rect_a[0]
+    ay1 = rect_a[1]
+    ax2 = ax1 + rect_a[2]
+    ay2 = ay1 + rect_a[3]
 
-    x1 = max(Ax1, Bx1)
-    y1 = max(Ay1, By1)
-    x2 = min(Ax2, Bx2)
-    y2 = min(Ay2, By2)
+    bx1 = rect_b[0]
+    by1 = rect_b[1]
+    bx2 = bx1 + rect_b[2]
+    by2 = by1 + rect_b[3]
+
+    x1 = max(ax1, bx1)
+    y1 = max(ay1, by1)
+    x2 = min(ax2, bx2)
+    y2 = min(ay2, by2)
 
     intersection = abs(x2 - x1) * abs(y2 - y1)
-    union = abs(Ax2 - Ax1) * abs(Ay2 - Ay1) + abs(Bx2 - Bx1) * abs(By2 - By1) - intersection
-    iou = intersection / union
-    return iou
+    union = abs(ax2 - ax1) * abs(ay2 - ay1) + abs(bx2 - bx1) * abs(by2 - by1) - intersection
+    return intersection / union
+
+
+def compare_exp_to_gt(exp_bbxs, gt_bbxs, threshold):
+    """ args:
+    exp_bbx - a list of bbx's produced by the models
+    gt_bbx - a set of gt bbx's for the image { [....], ... , [....] }
+
+    where bbx = [x, y, w, h]
+
+    return: [ true_pos, false_pos, false_neg ]
+    """
+    true_pos = 0
+    for bbx in exp_bbxs:
+        found = False
+        match = []
+        for gt in gt_bbxs:
+            if overlap(bbx, gt[0:4]) and iou(bbx, gt) >= threshold:
+                found = True
+                match = gt
+                break
+        if found:
+            true_pos = true_pos + 1
+            gt_bbxs.remove(match)
+            if len(gt_bbxs) == 0:
+                break
+
+    false_pos = len(exp_bbxs) - true_pos
+    false_neg = len(gt_bbxs)
+    return [true_pos, false_pos, false_neg]
+
 
 def main():
-    gray = cv2.imread('../test/img3.jpg', 0)
-    # dict {'img_name' : [ bbx1, bbx2], ... } where each bbx is an array (4 + 6 tuple)
-    # gt_bbxs = parse_input()
+    gray = cv2.imread('../test/7_Cheering_Cheering_7_125.jpg', 0)
+    # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
+    all_gt_bbxs = parse_input()
+    gt_bbxs = all_gt_bbxs['7_Cheering_Cheering_7_125.jpg']
 
-    
-    print(IoU([1, 1, 3, 2], [5, 1, 1, 1]))
-
-    """
-    print(fp.readline())
-    n = fp.readline()
-    gt_rects = []
-    for i in n:
-        gt_rects.append(fp.read())
-    print(gt_rects[0])
-    """
-
-
-    """
     model1 = Cascade()
     faces = model1.detect_face(gray)
     for (x, y, w, h) in faces: 
@@ -92,29 +115,38 @@ def main():
     plt.figure(figsize=(12,8))
     plt.imshow(gray, cmap='gray')
     plt.show()
+    data = compare_exp_to_gt(faces, gt_bbxs, 0.4)
+    print(data)
 
+    """
     model2 = Hog()
     rects = model2.detect_face(gray)
+    faces = []
     for (i, rect) in enumerate(rects):
-        (x, y, w, h) = face_utils.rect_to_bb(rect)
+        faces.append(face_utils.rect_to_bb(rect))
+        (x, y, w, h) = faces[-1]
         cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 3)
 
-    plt.figure(figsize=(12,8))
+    plt.figure(figsize=(12, 8))
     plt.imshow(gray, cmap='gray')
     plt.show()
+    """
+
+    """
     model3 = Cnn()
     rects = model3.detect_face(gray)
+    faces = []
     for (i, rect) in enumerate(rects):
-        x1 = rect.rect.left()
-        y1 = rect.rect.top()
-        x2 = rect.rect.right()
-        y2 = rect.rect.bottom()
-	# Rectangle around the face
-        cv2.rectangle(gray, (x1, y1), (x2, y2), (255, 255, 255), 3)
+        faces.append(face_utils.rect_to_bb(rect))
+        (x, y, w, h) = faces[-1]
+        # Rectangle around the face
+        cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 3)
 
-    plt.figure(figsize=(12,8))
+    plt.figure(figsize=(12, 8))
     plt.imshow(gray, cmap='gray')
     plt.show()
+    data = compare_exp_to_gt(faces, gt_bbxs, 0.4)
+    print(data)
     """
 
 
