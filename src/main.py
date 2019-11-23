@@ -22,7 +22,7 @@ def collect_gt_values():
     gt_file = open(os.path.join(script_dir, gt_path))
     line = gt_file.readline().replace('\n', '').split("/")[1]
     while line:
-        ALL_GT_BBXS[line] = set([])
+        ALL_GT_BBXS[line] = []
         num_bbxs = gt_file.readline()
         if int(num_bbxs) != 0:
             for i in range(int(num_bbxs)):
@@ -38,7 +38,7 @@ def collect_gt_values():
                     continue
                 else:
                     # 'img_name' -> [0,1,...,9]
-                    ALL_GT_BBXS[line].add(gt)
+                    ALL_GT_BBXS[line].append(gt)
             # remove images with 0 gt bbxs
             if len(ALL_GT_BBXS[line]) == 0:
                 del ALL_GT_BBXS[line]
