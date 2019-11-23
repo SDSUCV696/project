@@ -2,8 +2,6 @@ import os
 import cv2
 import numpy as np
 import time
-import matplotlib.pyplot as plt
-from imutils import face_utils
 from src.models import models
 
 
@@ -42,6 +40,7 @@ def collect_gt_values():
                     # 'img_name' -> [0,1,...,9]
                     ALL_GT_BBXS[line].append(gt)
             if len(ALL_GT_BBXS[line]) == 0:
+                # remove images with 0 gt bbxs
                 del ALL_GT_BBXS[line]
         else:
             # if the num of boxes is zero, move line down by one
@@ -128,8 +127,6 @@ def go(model):
 
     for img, gt_bbxs in ALL_GT_BBXS.items():
         number_of_correct_gt_bbxs = len(gt_bbxs)
-        if number_of_correct_gt_bbxs == 0:
-            continue
         i = i + 1
         total_number_of_gt_bbxs = total_number_of_gt_bbxs + number_of_correct_gt_bbxs
         gray = cv2.imread("../test/WIDER_val_images/" + img)
@@ -137,15 +134,15 @@ def go(model):
         faces = model.convert(rects)
         result = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
         total = np.add(total, result)
-        # string = (i, '/', sz, "image percentage:", "%3.3f" % (result[0]/number_of_correct_gt_bbxs), "total percentage:", "%3.3f" % (total[0]/total_number_of_gt_bbxs), img)
-        string = "{0} / {1} percent correct for image: {2:0.3f} total percent correct {3:0.3f} {4}".format\
+        string = "{0} / {1} percent correct for image: {2:0.4f} total percent correct {3:0.9f} {4}".format\
             (i, sz, (result[0]/number_of_correct_gt_bbxs), (total[0]/total_number_of_gt_bbxs), img)
         model.write(string)
         print(string)
     t1 = time.clock()
-    # close file
+    time_elapsed = "total time elapsed:{0:5.2f}".format(t1 - t0)
+    model.write(time_elapsed)
     model.close()
-    print("total time elapsed:", t0 - t1)
+    print(time_elapsed)
     return total
 
 
@@ -153,18 +150,14 @@ def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
     collect_gt_values()
 
-    """
-    cascade = models.Cascade()
-    go(cascade)
-    """
-
     hog = models.Hog()
     go(hog)
 
-
     """
-    go(hog)
-
+    cascade = models.Cascade()
+    go(cascade)
+    
+    
     cnn = models.Cnn()
     go(cnn)
     """

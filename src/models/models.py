@@ -37,11 +37,9 @@ class Hog(Model):
         return faces
 
 
-class Cnn:
+class Cnn(Model):
     def __init__(self):
         super(Cnn, self).__init__("cnn_output.txt")
-        casc_path = "../utils/haarcascade_frontalface_default.xml"
-        self.faceCascade = cv2.CascadeClassifier(casc_path)
         path = "/home/jahn/Documents/CV696/project/utils/mmod_human_face_detector.dat"
         self.dnnFaceDetector = dlib.cnn_face_detection_model_v1(path)
 
