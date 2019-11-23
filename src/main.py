@@ -22,7 +22,7 @@ def collect_gt_values():
     gt_file = open(os.path.join(script_dir, gt_path))
     line = gt_file.readline().replace('\n', '').split("/")[1]
     while line:
-        ALL_GT_BBXS[line] = []
+        ALL_GT_BBXS[line] = set([])
         num_bbxs = gt_file.readline()
         if int(num_bbxs) != 0:
             for i in range(int(num_bbxs)):
@@ -33,17 +33,17 @@ def collect_gt_values():
                 tokens.pop()
                 gt = [int(i) for i in tokens]
 
-                if gt[2] * gt[3] < MIN_AREA or gt[4] > MAX_BLUR or gt[8] > MAX_OCC:
-                    # omit bbxs that have too much blur, occlusion, or too small area
+                # omit bbxs that have too much blur, occlusion, are invalid, or too little area
+                if gt[2] * gt[3] < MIN_AREA or gt[4] > MAX_BLUR or gt[8] > MAX_OCC or gt[9] == 1:
                     continue
                 else:
                     # 'img_name' -> [0,1,...,9]
-                    ALL_GT_BBXS[line].append(gt)
+                    ALL_GT_BBXS[line].add(gt)
+            # remove images with 0 gt bbxs
             if len(ALL_GT_BBXS[line]) == 0:
-                # remove images with 0 gt bbxs
                 del ALL_GT_BBXS[line]
         else:
-            # if the num of boxes is zero, move line down by one
+            # if the num of boxes is zero, manually move line down by one
             line = gt_file.readline()
         line = gt_file.readline().replace('\n', '')
         if line:
