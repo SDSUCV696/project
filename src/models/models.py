@@ -3,8 +3,26 @@ import dlib
 from imutils import face_utils
 
 
-class Hog:
+class Model:
+    def __init__(self, file):
+        self.file = open(file, "w")
+
+    def detect_face(self):
+        pass
+
+    def convert(self):
+        pass
+
+    def write(self, string):
+        self.file.write(string + "\n")
+
+    def close(self):
+        self.file.close()
+
+
+class Hog(Model):
     def __init__(self):
+        super(Hog, self).__init__("hog_output.txt")
         self.face_detect = dlib.get_frontal_face_detector()
 
     def detect_face(self, gray):
@@ -21,6 +39,9 @@ class Hog:
 
 class Cnn:
     def __init__(self):
+        super(Cnn, self).__init__("cnn_output.txt")
+        casc_path = "../utils/haarcascade_frontalface_default.xml"
+        self.faceCascade = cv2.CascadeClassifier(casc_path)
         path = "/home/jahn/Documents/CV696/project/utils/mmod_human_face_detector.dat"
         self.dnnFaceDetector = dlib.cnn_face_detection_model_v1(path)
 
@@ -40,10 +61,11 @@ class Cnn:
         return faces
 
 
-class Cascade:
+class Cascade(Model):
     def __init__(self):
-        cascPath = "../utils/haarcascade_frontalface_default.xml"
-        self.faceCascade = cv2.CascadeClassifier(cascPath)
+        super(Cascade, self).__init__("cascade_output.txt")
+        casc_path = "../utils/haarcascade_frontalface_default.xml"
+        self.faceCascade = cv2.CascadeClassifier(casc_path)
 
     def detect_face(self, gray):
         # Detect faces
@@ -57,3 +79,6 @@ class Cascade:
 
     def convert(self, rects):
         return rects
+
+    def write(self, string):
+        self.file.write(string + "\n")

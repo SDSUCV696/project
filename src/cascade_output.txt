@@ -1,0 +1,10 @@
+1 / 2636 percent correct for image: 0.200 total percent correct 0.200 0_Parade_Parade_0_194.jpg
+2 / 2636 percent correct for image: 0.850 total percent correct 0.720 0_Parade_Parade_0_470.jpg
+3 / 2636 percent correct for image: 1.000 total percent correct 0.731 0_Parade_marchingband_1_556.jpg
+4 / 2636 percent correct for image: 1.000 total percent correct 0.741 0_Parade_Parade_0_829.jpg
+5 / 2636 percent correct for image: 0.250 total percent correct 0.677 0_Parade_Parade_0_29.jpg
+6 / 2636 percent correct for image: 0.000 total percent correct 0.636 0_Parade_Parade_0_205.jpg
+7 / 2636 percent correct for image: 0.250 total percent correct 0.595 0_Parade_Parade_0_120.jpg
+8 / 2636 percent correct for image: 0.286 total percent correct 0.545 0_Parade_marchingband_1_476.jpg
+9 / 2636 percent correct for image: 1.000 total percent correct 0.583 0_Parade_Parade_0_960.jpg
+10 / 2636 percent correct for image: 0.333 total percent correct 0.569 0_Parade_Parade_0_901.jpg
