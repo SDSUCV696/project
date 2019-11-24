@@ -10,11 +10,8 @@ ALL_GT_BBXS = {}
 MAX_BLUR = 1
 MAX_OCC = 1
 MIN_AREA = 35*35
+# [blur, expression, illum, invalid(?), occlusion, pose]
 TOTAL_ATTRIBUTES = [0 for i in range(6)]
-
-
-def parse_input():
-    pass
 
 
 def collect_gt_values():
@@ -104,16 +101,16 @@ def compare_exp_to_gt(exp_bbxs, gt_bbxs, threshold):
     false_neg_attributes = [0 for i in range(6)]
     for bbx in exp_bbxs:
         found = False
-        match = []
+        gt_match = []
         for gt in gt_bbxs:
             if overlap(bbx, gt[0:4]) and iou(bbx, gt) >= threshold:
                 found = True
-                match = gt
+                gt_match = gt
                 break
         if found:
             true_pos = true_pos + 1
-            true_pos_attributes = np.add(match[4:], true_pos_attributes)
-            gt_bbxs.remove(match)
+            true_pos_attributes = np.add(gt_match[4:], true_pos_attributes)
+            gt_bbxs.remove(gt_match)
             if len(gt_bbxs) == 0:
                 break
 
@@ -144,7 +141,8 @@ def go(model):
         rects = model.detect_face(gray)
         t1 = time.clock()
         faces = model.convert(rects)
-        confusion_matrix, true_positive_attributes, false_negative_attributes = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
+        confusion_matrix, true_positive_attributes, false_negative_attributes \
+            = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
         string = "{0}/{1} true_positive_ratio: {2}/{3} total_percent_correct: {4:0.9f}" \
                  " time_elapsed: {5:0.2f} {6}".format\
@@ -152,6 +150,20 @@ def go(model):
              (total_confusion_matrix[0]/total_number_of_gt_bbxs*100), t1 - t0, img)
         model.write(string)
         print(string)
+
+    true_positive_ratios = []
+    for i, val in enumerate(TOTAL_ATTRIBUTES):
+        attribute_string = (str(true_positive_attributes[i])) + "/" + (str(val))
+        true_positive_ratios.append(attribute_string)
+
+    string = "true  positives: blur:{0}, expr:{1}, illum:{2}, occlu:{3}".format\
+        (true_positive_ratios[0], true_positive_ratios[1], true_positive_ratios[2], true_positive_ratios[4])
+    model.write(string)
+    string = "false negatives: blur:{0}, expr:{1}, illum:{2}, occlu:{3}".format\
+        (false_negative_attributes[0], false_negative_attributes[1], false_negative_attributes[2],
+         false_negative_attributes[4])
+    model.write(string)
+
     t_end = time.clock()
     time_elapsed = "total time elapsed:{0:5.2f}".format(t_end - t_start)
     model.write(time_elapsed)
@@ -163,7 +175,6 @@ def go(model):
 def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
     collect_gt_values()
-    print(TOTAL_ATTRIBUTES)
 
     hog = models.Hog()
     go(hog)
