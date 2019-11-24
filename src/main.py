@@ -45,6 +45,8 @@ def collect_gt_values():
         else:
             # if the num of boxes is zero, manually move line down by one
             line = gt_file.readline()
+        # clear the buffer of the string from prev line
+        gt_file.flush()
         line = gt_file.readline().replace('\n', '')
         if line:
             # if line is not EOF, split it
@@ -98,7 +100,6 @@ def compare_exp_to_gt(exp_bbxs, gt_bbxs, threshold):
     """
     true_pos = 0
     true_pos_attributes = [0 for i in range(6)]
-    false_neg_attributes = [0 for i in range(6)]
     for bbx in exp_bbxs:
         found = False
         gt_match = []
@@ -118,17 +119,12 @@ def compare_exp_to_gt(exp_bbxs, gt_bbxs, threshold):
     false_pos = len(exp_bbxs) - true_pos
     false_neg = len(gt_bbxs)
 
-    # number of correct bbxs remaining (unmatched)
-    for gt in gt_bbxs:
-        false_neg_attributes = np.add(false_neg_attributes, gt[4:])
-
-    return [true_pos, false_pos, false_neg], true_pos_attributes, false_neg_attributes
+    return [true_pos, false_pos, false_neg], true_pos_attributes
 
 
 def go(model):
     total_confusion_matrix = [0, 0, 0]
     total_true_pos_attributes = [0 for i in range(6)]
-    total_false_neg_attributes = [0 for i in range(6)]
     total_number_of_gt_bbxs = 0
     i = 0
     sz = len(ALL_GT_BBXS)
@@ -141,17 +137,21 @@ def go(model):
         gray = cv2.imread("../test/WIDER_val_images/" + img)
         rects = model.detect_face(gray)
         faces = model.convert(rects)
-        confusion_matrix, true_pos_attributes, false_neg_attributes \
-            = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
+        confusion_matrix, true_pos_attributes = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
         total_true_pos_attributes = np.add(total_true_pos_attributes, true_pos_attributes)
-        total_false_neg_attributes = np.add(total_false_neg_attributes, false_neg_attributes)
         string = "{0}/{1} true_positive_ratio: {2}/{3} total_percent_correct: {4:0.9f}"\
                  " {5}".format\
             (i, sz, confusion_matrix[0], number_of_correct_gt_bbxs,
              (total_confusion_matrix[0]/total_number_of_gt_bbxs*100), img)
         model.write(string)
         print(string)
+
+    model.write("total_number_of_gt_bbxs: " + str(total_number_of_gt_bbxs))
+
+    string = "total_true_pos: {0}, total_false_pos: {1}, total_false_neg: {2}".\
+        format(total_confusion_matrix[0], total_confusion_matrix[1], total_confusion_matrix[2])
+    model.write(string)
 
     true_positive_ratios = []
     for i, val in enumerate(TOTAL_ATTRIBUTES):
@@ -161,14 +161,10 @@ def go(model):
     string = "true  positives: blur:{0}, expr:{1}, illum:{2}, occlu:{3}".format\
         (true_positive_ratios[0], true_positive_ratios[1], true_positive_ratios[2], true_positive_ratios[4])
     model.write(string)
-
-    string = "false negatives: blur:{0}, expr:{1}, illum:{2}, occlu:{3}".format\
-        (total_false_neg_attributes[0], total_false_neg_attributes[1], total_false_neg_attributes[2],
-         total_false_neg_attributes[4])
-    model.write(string)
+    print(string)
 
     t_end = time.clock()
-    time_elapsed = "total time elapsed:{0:5.2f}".format(t_end - t_start)
+    time_elapsed = "total time elapsed: {0:5.2f}".format(t_end - t_start)
     model.write(time_elapsed)
     model.close()
     print(time_elapsed)
@@ -179,14 +175,15 @@ def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
     collect_gt_values()
 
-    hog = models.Hog()
-    go(hog)
-
     """
     cascade = models.Cascade()
     go(cascade)
-    
-    
+    hog = models.Hog()
+    go(hog)
+    """
+
+
+    """
     cnn = models.Cnn()
     go(cnn)
     """
