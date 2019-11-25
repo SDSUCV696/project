@@ -129,8 +129,10 @@ def go(model):
     i = 0
     sz = len(ALL_GT_BBXS)
     t_start = time.clock()
+    # don't want to mutate original dict for other models to reuse
+    all_gt_bbxs_copy = ALL_GT_BBXS.copy()
 
-    for img, gt_bbxs in ALL_GT_BBXS.items():
+    for img, gt_bbxs in all_gt_bbxs_copy.items():
         number_of_correct_gt_bbxs = len(gt_bbxs)
         i = i + 1
         total_number_of_gt_bbxs = total_number_of_gt_bbxs + number_of_correct_gt_bbxs
@@ -181,12 +183,8 @@ def main():
     hog = models.Hog()
     go(hog)
     """
-
-
-    """
     cnn = models.Cnn()
     go(cnn)
-    """
 
 
 if __name__ == "__main__":
