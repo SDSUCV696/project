@@ -138,8 +138,7 @@ def go(model):
         total_number_of_gt_bbxs = total_number_of_gt_bbxs + number_of_correct_gt_bbxs
         gray = cv2.imread("../test/WIDER_val_images/" + img)
         rects = model.detect_face(gray)
-        faces = model.convert(rects)
-        confusion_matrix, true_pos_attributes = compare_exp_to_gt(faces, gt_bbxs, THRESHOLD)
+        confusion_matrix, true_pos_attributes = compare_exp_to_gt(rects, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
         total_true_pos_attributes = np.add(total_true_pos_attributes, true_pos_attributes)
         string = "{0}/{1} true_positive_ratio: {2}/{3} total_percent_correct: {4:0.9f}"\

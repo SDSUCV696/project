@@ -27,6 +27,7 @@ class Hog(Model):
 
     def detect_face(self, gray):
         rects = self.face_detect(gray, 1)
+        rects = self.convert(rects)
         return rects
 
     def convert(self, rects):
@@ -45,6 +46,7 @@ class Cnn(Model):
 
     def detect_face(self, gray):
         rects = self.dnnFaceDetector(gray, 0)
+        rects = self.convert(rects)
         return rects
 
     def convert(self, rects):
