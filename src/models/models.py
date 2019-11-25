@@ -77,8 +77,5 @@ class Cascade(Model):
         )
         return faces
 
-    def convert(self, rects):
-        return rects
-
     def write(self, string):
         self.file.write(string + "\n")
