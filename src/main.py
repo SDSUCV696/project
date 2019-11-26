@@ -141,10 +141,18 @@ def go(model):
         confusion_matrix, true_pos_attributes = compare_exp_to_gt(rects, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
         total_true_pos_attributes = np.add(total_true_pos_attributes, true_pos_attributes)
-        string = "{0}/{1} true_positive_ratio: {2}/{3} total_percent_correct: {4:0.9f}"\
-                 " {5}".format\
-            (i, sz, confusion_matrix[0], number_of_correct_gt_bbxs,
-             (total_confusion_matrix[0]/total_number_of_gt_bbxs*100), img)
+        string = "{0}/{1} "\
+                 "correctness_ratio: {2}/{3} " \
+                 "true_positive_ratio: {2}/{7} "\
+                 "total_correct_ratio: {4}/{5} "\
+                 "= {6:0.9f}% "\
+                 "{8}".format(
+                            i, sz,
+                            confusion_matrix[0], number_of_correct_gt_bbxs,
+                            total_confusion_matrix[0], total_number_of_gt_bbxs,
+                            total_confusion_matrix[0]/total_number_of_gt_bbxs*100,
+                            confusion_matrix[0] + confusion_matrix[1],
+                            img)
         model.write(string)
         print(string)
 
@@ -176,14 +184,14 @@ def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
     collect_gt_values()
 
-    """
-    cascade = models.Cascade()
-    go(cascade)
-    hog = models.Hog()
-    go(hog)
-    """
     cnn = models.Cnn()
     go(cnn)
+    """
+    hog = models.Hog()
+    go(hog)
+    cascade = models.Cascade()
+    go(cascade)
+    """
 
 
 if __name__ == "__main__":
