@@ -45,7 +45,7 @@ class Cnn(Model):
         self.dnnFaceDetector = dlib.cnn_face_detection_model_v1(path)
 
     def detect_face(self, gray):
-        rects = self.dnnFaceDetector(gray, 0)
+        rects = self.dnnFaceDetector(gray, 1)
         rects = self.convert(rects)
         return rects
 
