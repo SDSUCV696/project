@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import time
-from src.models import models
+from models import models
 
 
 THRESHOLD = 0.5
@@ -10,12 +10,14 @@ ALL_GT_BBXS = {}
 MAX_BLUR = 1
 MAX_OCC = 1
 MIN_AREA = 35*35
+MAX_BBXS_PER_PICTURE = 100
 # [blur, expression, illum, invalid(?), occlusion, pose]
 TOTAL_ATTRIBUTES = [0 for i in range(6)]
 
 
 def collect_gt_values():
     global TOTAL_ATTRIBUTES
+    ALL_GT_BBXS.clear()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     gt_path = "../test/wider_face_split/wider_face_val_bbx_gt.txt"
     gt_file = open(os.path.join(script_dir, gt_path))
@@ -23,7 +25,15 @@ def collect_gt_values():
     while line:
         ALL_GT_BBXS[line] = []
         num_bbxs = gt_file.readline()
-        if int(num_bbxs) != 0:
+        if int(num_bbxs) == 0:
+            # if the num of boxes is zero move to next line manually
+            line = gt_file.readline()
+        elif int(num_bbxs) > MAX_BBXS_PER_PICTURE:
+            # if the num of bbxs is too large, skip the image
+            del ALL_GT_BBXS[line]
+            for i in range(int(num_bbxs)):
+                gt_file.readline()
+        else:
             for i in range(int(num_bbxs)):
                 bbx = gt_file.readline()
                 bbx = bbx.replace('\n', '')
@@ -42,9 +52,6 @@ def collect_gt_values():
             # remove images with 0 gt bbxs
             if len(ALL_GT_BBXS[line]) == 0:
                 del ALL_GT_BBXS[line]
-        else:
-            # if the num of boxes is zero, manually move line down by one
-            line = gt_file.readline()
         # clear the buffer of the string from prev line
         gt_file.flush()
         line = gt_file.readline().replace('\n', '')
@@ -127,16 +134,16 @@ def go(model):
     total_true_pos_attributes = [0 for i in range(6)]
     total_number_of_gt_bbxs = 0
     i = 0
-    sz = len(ALL_GT_BBXS)
     t_start = time.clock()
     # don't want to mutate original dict for other models to reuse
-    all_gt_bbxs_copy = ALL_GT_BBXS.copy()
+    collect_gt_values()
+    sz = len(ALL_GT_BBXS)
 
-    for img, gt_bbxs in all_gt_bbxs_copy.items():
+    for img, gt_bbxs in ALL_GT_BBXS.items():
         number_of_correct_gt_bbxs = len(gt_bbxs)
         i = i + 1
         total_number_of_gt_bbxs = total_number_of_gt_bbxs + number_of_correct_gt_bbxs
-        gray = cv2.imread("../test/WIDER_val_images/" + img)
+        gray = cv2.imread("../test/WIDER_val_images/" + img, 0)
         rects = model.detect_face(gray)
         confusion_matrix, true_pos_attributes = compare_exp_to_gt(rects, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
@@ -182,15 +189,15 @@ def go(model):
 
 def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
-    collect_gt_values()
 
-    cnn = models.Cnn()
-    go(cnn)
-    """
-    hog = models.Hog()
-    go(hog)
+
     cascade = models.Cascade()
     go(cascade)
+    """
+    hog = models.Hog()
+    go(hog) 
+    cnn = models.Cnn()
+    go(cnn)
     """
 
 
