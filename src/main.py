@@ -2,7 +2,8 @@ import os
 import cv2
 import numpy as np
 import time
-from models import models
+import matplotlib.pyplot as plt
+from src.models import models
 
 
 THRESHOLD = 0.5
@@ -13,6 +14,7 @@ MIN_AREA = 35*35
 MAX_BBXS_PER_PICTURE = 100
 # [blur, expression, illum, invalid(?), occlusion, pose]
 TOTAL_ATTRIBUTES = [0 for i in range(6)]
+MAX_HEIGHT_IMAGE_SIZE = 950
 
 
 def collect_gt_values():
@@ -49,8 +51,10 @@ def collect_gt_values():
                     # 'img_name' -> [0,1,...,9]
                     ALL_GT_BBXS[line].append(gt)
                     TOTAL_ATTRIBUTES = np.add(TOTAL_ATTRIBUTES, gt[4:])
+            img = cv2.imread("../test/WIDER_val_images/" + line)
+            h, w, c = img.shape
             # remove images with 0 gt bbxs
-            if len(ALL_GT_BBXS[line]) == 0:
+            if h > MAX_HEIGHT_IMAGE_SIZE or len(ALL_GT_BBXS[line]) == 0:
                 del ALL_GT_BBXS[line]
         # clear the buffer of the string from prev line
         gt_file.flush()
@@ -140,16 +144,16 @@ def go(model):
     sz = len(ALL_GT_BBXS)
 
     for img, gt_bbxs in ALL_GT_BBXS.items():
+        gray = cv2.imread("../test/WIDER_val_images/" + img, 0)
         number_of_correct_gt_bbxs = len(gt_bbxs)
         i = i + 1
         total_number_of_gt_bbxs = total_number_of_gt_bbxs + number_of_correct_gt_bbxs
-        gray = cv2.imread("../test/WIDER_val_images/" + img, 0)
         rects = model.detect_face(gray)
         confusion_matrix, true_pos_attributes = compare_exp_to_gt(rects, gt_bbxs, THRESHOLD)
         total_confusion_matrix = np.add(total_confusion_matrix, confusion_matrix)
         total_true_pos_attributes = np.add(total_true_pos_attributes, true_pos_attributes)
         string = "{0}/{1} "\
-                 "correctness_ratio: {2}/{3} " \
+                 "correctness_ratio: {2}/{3} "\
                  "true_positive_ratio: {2}/{7} "\
                  "total_correct_ratio: {4}/{5} "\
                  "= {6:0.9f}% "\
@@ -189,15 +193,28 @@ def go(model):
 
 def main():
     # dict {'img_name' : [ [bbx1], [bbx2] ], 'img2' : [ ]... } where each bbx is an array (4 + 6 tuple)
+    collect_gt_values()
 
-
-    cascade = models.Cascade()
-    go(cascade)
     """
+    model = models.Cnn()
+    gray = cv2.imread("faces.jpg", 0)
+    scale = 70
+    height = int(scale / 100 * gray.shape[0])
+    width = int(scale / 100 * gray.shape[1])
+    print(height, width)
+    dim = (width, height)
+    gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
+    rects = model.detect_face(gray)
+    for x, y, w, h in rects:
+        cv2.rectangle(gray, (x, y), (x+w, y+h), (255, 255, 255), 3)
+    plt.figure(figsize=(12, 8))
+    plt.imshow(gray, cmap='gray')
+    plt.show()
+    """
+    """
+    go(cascade)
     hog = models.Hog()
-    go(hog) 
-    cnn = models.Cnn()
-    go(cnn)
+    go(hog)
     """
 
 

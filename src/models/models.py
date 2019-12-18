@@ -7,10 +7,10 @@ class Model:
     def __init__(self, file):
         self.file = open(file, "w")
 
-    def detect_face(self):
+    def detect_face(self, gray):
         pass
 
-    def convert(self):
+    def convert(self, rect):
         pass
 
     def write(self, string):
@@ -71,9 +71,9 @@ class Cascade(Model):
         # Detect faces
         faces = self.faceCascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            flags=cv2.CASCADE_SCALE_IMAGE
+            scaleFactor=1.05,
+            minNeighbors=4,
+            minSize=(35, 35)
         )
         return faces
 
