@@ -71,7 +71,7 @@ class Cascade(Model):
         # Detect faces
         faces = self.faceCascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
+            scaleFactor=1.05,
             minNeighbors=5,
         )
         return faces
