@@ -211,8 +211,11 @@ def main():
     plt.imshow(gray, cmap='gray')
     plt.show()
     """
-    """
+
+    cascade = models.Cascade()
     go(cascade)
+
+    """
     hog = models.Hog()
     go(hog)
     """
